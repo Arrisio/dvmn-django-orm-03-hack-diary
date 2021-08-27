@@ -85,7 +85,9 @@ class Mark(models.Model):
     schoolkid = models.ForeignKey(
         Schoolkid,
         verbose_name='ученик',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        related_name="marks"
+    )
     subject = models.ForeignKey(
         Subject,
         verbose_name='предмет',
@@ -107,7 +109,8 @@ class Chastisement(models.Model):
     schoolkid = models.ForeignKey(
         Schoolkid,
         verbose_name='ученик',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        related_name="chastisements")
     subject = models.ForeignKey(
         Subject,
         verbose_name='предмет',
