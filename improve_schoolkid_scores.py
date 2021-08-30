@@ -2,7 +2,7 @@ import os
 from random import choice
 
 import django
-from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 django.setup()
@@ -15,30 +15,25 @@ from datacenter.models import (
     Mark,
 )
 
-schoolkid_search_string: str = "Фролов Иван"
+schoolkid_search_string: str = "Фролов Ива"
 
 
 def fix_marks(
-    schoolkid_search_string: str = "Фролов Иван",
+    schoolkid: Schoolkid,
     positive_marks: list = [4, 5],
     negative_marks: list = [1, 2, 3],
 ):
-    marks = Schoolkid.objects.get(
-        full_name__icontains=schoolkid_search_string
-    ).marks.filter(points__in=negative_marks)
+    marks = schoolkid.marks.filter(points__in=negative_marks)
     for mark in marks:
         mark.points = choice(positive_marks)
 
     Mark.objects.bulk_update(marks, fields=["points"])
 
 
-def remove_chastisements(schoolkid_search_string="Фролов Иван"):
-    chastisements = Schoolkid.objects.get(
-        full_name__icontains=schoolkid_search_string
-    ).chastisements
-    print(f"Текущие замечания (кол-во:{chastisements.count()}):")
+def remove_chastisements(schoolkid: Schoolkid):
+    print(f"Текущие замечания (кол-во:{schoolkid.chastisements.count()}):")
     chastisement: Chastisement
-    for chastisement in chastisements.iterator():
+    for chastisement in schoolkid.chastisements.iterator():
         print(chastisement.text)
     Schoolkid.objects.filter(
         full_name__icontains=schoolkid_search_string
@@ -46,12 +41,7 @@ def remove_chastisements(schoolkid_search_string="Фролов Иван"):
     print("Замечания удалены.")
 
 
-def create_commendation(
-    schoolkid_search_string="Фролов Иван", subject_search_string="Математика"
-):
-    schoolkid = Schoolkid.objects.get(
-        full_name__icontains=schoolkid_search_string
-    )
+def create_commendation(schoolkid: Schoolkid, subject_search_string="Математика"):
 
     latest_lesson: Lesson = Lesson.objects.filter(
         year_of_study=schoolkid.year_of_study,
@@ -70,10 +60,18 @@ def create_commendation(
 
 if __name__ == "__main__":
     try:
-        fix_marks(schoolkid_search_string="f")
-        remove_chastisements(schoolkid_search_string=schoolkid_search_string)
-        create_commendation(schoolkid_search_string=schoolkid_search_string)
+        schoolkid = Schoolkid.objects.get(
+            full_name__icontains=schoolkid_search_string
+        )
     except MultipleObjectsReturned:
         print(
             "По этим указанным параметрам нейдено несколько учеников. Exiting..."
         )
+        exit()
+    except ObjectDoesNotExist:
+        print("По этим указанным параметрам учеников не найдено. Exiting...")
+        exit()
+
+    fix_marks(schoolkid)
+    remove_chastisements(schoolkid)
+    create_commendation(schoolkid)
