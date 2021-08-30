@@ -33,11 +33,11 @@ def remove_chastisements(schoolkid: Schoolkid):
     print("Все замечания удалены.")
 
 
-def create_commendation(schoolkid: Schoolkid, subject_search_string: str):
+def create_commendation(schoolkid: Schoolkid, subj: str):
     latest_lesson: Lesson = Lesson.objects.filter(
         year_of_study=schoolkid.year_of_study,
         group_letter=schoolkid.group_letter,
-        subject__title__icontains=subject_search_string,
+        subject__title__iexact=subj,
     ).latest("date")
 
     Commendation.objects.create(
@@ -51,25 +51,25 @@ def create_commendation(schoolkid: Schoolkid, subject_search_string: str):
 
 
 def main(
-    fio: str = "Фролов Иван",
+    full_name: str = "Фролов Иван Григорьевич",
     subj: str = "Математика",
 ):
     """
 
     Args:
-        fio: Маска поиска ученика по ФИО
+        full_name: Маска поиска ученика по ФИО
         subj: Маска поиска предмета, куда будет добавлена похвала
     """
     try:
-        schoolkid = Schoolkid.objects.get(full_name__icontains=fio)
+        schoolkid = Schoolkid.objects.get(full_name__iexact=full_name)
     except Schoolkid.MultipleObjectsReturned:
         print(
-            f"По указанным параметрам ({fio}) найдено несколько учеников. Exiting..."
+            f"По указанным параметрам ({full_name}) найдено несколько учеников. Exiting..."
         )
         exit()
     except Schoolkid.DoesNotExist:
         print(
-            f"По указанным параметрам ({fio}) учеников не найдено. Exiting..."
+            f"По указанным параметрам ({full_name}) учеников не найдено. Exiting..."
         )
         exit()
 
@@ -77,7 +77,7 @@ def main(
     remove_chastisements(schoolkid)
 
     try:
-        create_commendation(schoolkid, subject_search_string=subj)
+        create_commendation(schoolkid, subj=subj)
     except Lesson.DoesNotExist:
         print(f'Не могу найти такой предмет "{subj}". Exiting...')
 
