@@ -1,8 +1,8 @@
 import os
 from random import choice
 
+import fire
 import django
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 django.setup()
@@ -14,8 +14,6 @@ from datacenter.models import (
     Chastisement,
     Mark,
 )
-
-schoolkid_search_string: str = "Фролов Ива"
 
 
 def fix_marks(
@@ -31,14 +29,9 @@ def fix_marks(
 
 
 def remove_chastisements(schoolkid: Schoolkid):
-    print(f"Текущие замечания (кол-во:{schoolkid.chastisements.count()}):")
-    chastisement: Chastisement
-    for chastisement in schoolkid.chastisements.iterator():
-        print(chastisement.text)
-    Schoolkid.objects.filter(
-        full_name__icontains=schoolkid_search_string
-    ).first().chastisements.all().delete()
-    print("Замечания удалены.")
+    print(f"Кол-во текущих замечаний: {schoolkid.chastisements.count()}.")
+    schoolkid.chastisements.all().delete()
+    print("Все замечания удалены.")
 
 
 def create_commendation(schoolkid: Schoolkid, subject_search_string: str):
@@ -56,27 +49,42 @@ def create_commendation(schoolkid: Schoolkid, subject_search_string: str):
         subject=latest_lesson.subject,
         teacher=latest_lesson.teacher,
     )
+    print(f'Добавлена похвала от имени {latest_lesson.teacher}.')
 
 
-if __name__ == "__main__":
+def main(
+    fio: str = "Фролов Иван",
+    subj: str = "Математика",
+):
+    """
+
+    Args:
+        fio: Маска поиска ученика по ФИО
+        subj: Маска поиска предмета, куда будет добавлена похвала
+    """
     try:
         schoolkid = Schoolkid.objects.get(
-            full_name__icontains=schoolkid_search_string
+            full_name__icontains=fio
         )
     except Schoolkid.MultipleObjectsReturned:
-        print(
-            "По этим указанным параметрам нейдено несколько учеников. Exiting..."
-        )
+        print(f"По указанным параметрам ({fio}) найдено несколько учеников. Exiting...")
         exit()
     except Schoolkid.DoesNotExist:
-        print("По этим указанным параметрам учеников не найдено. Exiting...")
+        print(f"По указанным параметрам ({fio}) учеников не найдено. Exiting...")
         exit()
 
     fix_marks(schoolkid)
     remove_chastisements(schoolkid)
-    subject_search_string="Мате"
 
     try:
-        create_commendation(schoolkid, subject_search_string=subject_search_string)
+        create_commendation(
+            schoolkid, subject_search_string=subj
+        )
     except Lesson.DoesNotExist:
-        print(f'Не могу найти такой предмет "{subject_search_string}". Exiting...')
+        print(
+            f'Не могу найти такой предмет "{subj}". Exiting...'
+        )
+
+
+if __name__ == "__main__":
+    fire.Fire(main)
