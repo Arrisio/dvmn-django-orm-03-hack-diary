@@ -11,7 +11,6 @@ from datacenter.models import (
     Schoolkid,
     Lesson,
     Commendation,
-    Chastisement,
     Mark,
 )
 
@@ -35,7 +34,6 @@ def remove_chastisements(schoolkid: Schoolkid):
 
 
 def create_commendation(schoolkid: Schoolkid, subject_search_string: str):
-
     latest_lesson: Lesson = Lesson.objects.filter(
         year_of_study=schoolkid.year_of_study,
         group_letter=schoolkid.group_letter,
@@ -49,7 +47,7 @@ def create_commendation(schoolkid: Schoolkid, subject_search_string: str):
         subject=latest_lesson.subject,
         teacher=latest_lesson.teacher,
     )
-    print(f'Добавлена похвала от имени {latest_lesson.teacher}.')
+    print(f"Добавлена похвала от имени {latest_lesson.teacher}.")
 
 
 def main(
@@ -63,27 +61,25 @@ def main(
         subj: Маска поиска предмета, куда будет добавлена похвала
     """
     try:
-        schoolkid = Schoolkid.objects.get(
-            full_name__icontains=fio
-        )
+        schoolkid = Schoolkid.objects.get(full_name__icontains=fio)
     except Schoolkid.MultipleObjectsReturned:
-        print(f"По указанным параметрам ({fio}) найдено несколько учеников. Exiting...")
+        print(
+            f"По указанным параметрам ({fio}) найдено несколько учеников. Exiting..."
+        )
         exit()
     except Schoolkid.DoesNotExist:
-        print(f"По указанным параметрам ({fio}) учеников не найдено. Exiting...")
+        print(
+            f"По указанным параметрам ({fio}) учеников не найдено. Exiting..."
+        )
         exit()
 
     fix_marks(schoolkid)
     remove_chastisements(schoolkid)
 
     try:
-        create_commendation(
-            schoolkid, subject_search_string=subj
-        )
+        create_commendation(schoolkid, subject_search_string=subj)
     except Lesson.DoesNotExist:
-        print(
-            f'Не могу найти такой предмет "{subj}". Exiting...'
-        )
+        print(f'Не могу найти такой предмет "{subj}". Exiting...')
 
 
 if __name__ == "__main__":
