@@ -41,7 +41,7 @@ def remove_chastisements(schoolkid: Schoolkid):
     print("Замечания удалены.")
 
 
-def create_commendation(schoolkid: Schoolkid, subject_search_string="Математика"):
+def create_commendation(schoolkid: Schoolkid, subject_search_string: str):
 
     latest_lesson: Lesson = Lesson.objects.filter(
         year_of_study=schoolkid.year_of_study,
@@ -63,15 +63,20 @@ if __name__ == "__main__":
         schoolkid = Schoolkid.objects.get(
             full_name__icontains=schoolkid_search_string
         )
-    except MultipleObjectsReturned:
+    except Schoolkid.MultipleObjectsReturned:
         print(
             "По этим указанным параметрам нейдено несколько учеников. Exiting..."
         )
         exit()
-    except ObjectDoesNotExist:
+    except Schoolkid.DoesNotExist:
         print("По этим указанным параметрам учеников не найдено. Exiting...")
         exit()
 
     fix_marks(schoolkid)
     remove_chastisements(schoolkid)
-    create_commendation(schoolkid)
+    subject_search_string="Мате"
+
+    try:
+        create_commendation(schoolkid, subject_search_string=subject_search_string)
+    except Lesson.DoesNotExist:
+        print(f'Не могу найти такой предмет "{subject_search_string}". Exiting...')
